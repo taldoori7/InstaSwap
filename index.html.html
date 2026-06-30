@@ -1,0 +1,1524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InstaSwap — Trade without cash · Dubai</title>
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#1e1a2e;--ink2:#2d2845;--coral:#b86450;--lime:#7dab5e;--gold:#b8913a;
+  --cream:#f4f1ec;--card:#fff;--muted:#7a746e;--sub:#4a4540;
+  --border:#dedad4;--border2:#b0a89e;--radius:14px;
+  --shadow:0 4px 24px rgba(30,26,46,.1);--shadow-lg:0 8px 40px rgba(30,26,46,.18);
+  --cat-electronics:#6080b0;--cat-music:#b86450;--cat-outdoors:#508a6a;
+  --cat-sports:#b8913a;--cat-books:#705a9a;--cat-art:#a85070;--cat-other:#6a6258;
+  --purple:#5a5490;--purple-bg:#eae8f2;--purple-border:#9890c0;--purple-fill:#6860a8;
+}
+body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--ink);min-height:100vh}
+h1,h2,h3,.logo-text,.plan-price,.section-title{font-family:'Syne',sans-serif}
+
+/* ── LOADING SCREEN ── */
+.loading-screen{position:fixed;inset:0;background:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;transition:opacity .4s}
+.loading-screen.hide{opacity:0;pointer-events:none}
+.loading-logo{font-size:48px;margin-bottom:16px;animation:pulse-swap 1.5s ease-in-out infinite}
+.loading-title{font-size:28px;font-weight:800;color:#fff;font-family:'Syne',sans-serif;margin-bottom:6px}
+.loading-sub{font-size:14px;color:rgba(255,255,255,.5)}
+.loading-bar{width:160px;height:3px;background:rgba(255,255,255,.15);border-radius:99px;margin-top:24px;overflow:hidden}
+.loading-bar-inner{height:100%;background:var(--coral);border-radius:99px;animation:loading-fill 1.8s ease-in-out forwards}
+@keyframes loading-fill{from{width:0}to{width:100%}}
+@keyframes pulse-swap{0%,100%{transform:scale(1) rotate(-5deg)}50%{transform:scale(1.1) rotate(5deg)}}
+
+/* ── NAV ── */
+.nav{background:var(--ink);padding:11px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:50;border-bottom:2px solid var(--coral)}
+.logo{display:flex;align-items:center;gap:8px;cursor:pointer;text-decoration:none}
+.logo-icon{width:30px;height:30px;background:var(--coral);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;transform:rotate(-8deg);transition:transform .2s}
+.logo:hover .logo-icon{transform:rotate(8deg)}
+.logo-text{font-size:16px;font-weight:800;color:#fff}
+.logo-text span{color:var(--lime)}
+.search-wrap{flex:1;min-width:130px;position:relative}
+.search-wrap input{width:100%;padding:7px 11px 7px 32px;border:2px solid transparent;border-radius:9px;background:rgba(255,255,255,.1);color:#fff;font-size:13px;outline:none;font-family:'Inter',sans-serif;transition:all .2s}
+.search-wrap input::placeholder{color:rgba(255,255,255,.4)}
+.search-wrap input:focus{background:rgba(255,255,255,.16);border-color:var(--lime)}
+.si{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.45);font-size:14px}
+.nav-tabs{display:flex;gap:2px}
+.tab{padding:6px 12px;border-radius:8px;font-size:13px;cursor:pointer;background:none;color:rgba(255,255,255,.55);white-space:nowrap;position:relative;font-weight:600;border:2px solid transparent;font-family:'Inter',sans-serif;transition:all .18s}
+.tab.active{background:var(--coral);color:#fff;border-color:var(--coral)}
+.tab:hover:not(.active){background:rgba(255,255,255,.1);color:#fff}
+.badge{position:absolute;top:2px;right:2px;width:7px;height:7px;background:var(--lime);border-radius:50%;border:2px solid var(--ink)}
+.nav-auth{display:flex;gap:7px;flex-shrink:0;align-items:center}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:9px;font-size:13px;cursor:pointer;font-weight:600;border:2px solid transparent;transition:all .18s;font-family:'Inter',sans-serif}
+.btn-coral{background:var(--coral);color:#fff;border-color:var(--coral)}
+.btn-coral:hover{background:#9e4a38;transform:translateY(-1px);box-shadow:0 4px 12px rgba(184,100,80,.3)}
+.btn-lime{background:var(--lime);color:var(--ink);border-color:var(--lime)}
+.btn-lime:hover{background:#6a9a4e;transform:translateY(-1px)}
+.btn-outline{background:none;border:2px solid var(--border2);color:var(--ink)}
+.btn-outline:hover{border-color:var(--ink);background:var(--ink);color:#fff}
+.btn-ghost-dark{background:none;border:2px solid rgba(255,255,255,.2);color:#fff;font-size:13px;font-weight:600}
+.btn-ghost-dark:hover{background:rgba(255,255,255,.1)}
+.btn-sm{background:none;border:1.5px solid var(--border2);color:var(--muted);font-size:12px;padding:4px 10px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:500}
+.btn-sm:hover{border-color:var(--ink);color:var(--ink)}
+.btn-acc{background:var(--lime);border:none;color:var(--ink);font-size:12px;padding:5px 12px;border-radius:8px;cursor:pointer;font-weight:700;font-family:'Inter',sans-serif}
+.btn-acc:hover{background:#6a9a4e}
+.btn-dec{background:none;border:1.5px solid var(--border2);color:var(--muted);font-size:12px;padding:5px 9px;border-radius:8px;cursor:pointer}
+.btn-blue{background:none;border:1.5px solid #a0bcd4;color:#4a6a90;font-size:12px;padding:4px 9px;border-radius:8px;cursor:pointer;font-weight:500}
+.btn-red{background:none;border:1.5px solid #d4aaaa;color:#824040;font-size:12px;padding:4px 9px;border-radius:8px;cursor:pointer}
+.btn-purple{background:linear-gradient(135deg,#5a5090,#7060a8);color:#fff;border:none;border-radius:9px;padding:9px 20px;font-size:13px;cursor:pointer;font-weight:700;font-family:'Syne',sans-serif;transition:all .18s}
+.btn-purple:hover{opacity:.9;transform:translateY(-1px);box-shadow:0 6px 20px rgba(90,80,144,.3)}
+
+/* ── CONTENT ── */
+.content{padding:18px 20px;max-width:900px;margin:0 auto}
+
+/* ── HERO ── */
+.hero{background:linear-gradient(135deg,var(--ink) 0%,var(--ink2) 60%,#302a52 100%);border-radius:20px;padding:26px;margin-bottom:18px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Ccircle cx='30' cy='30' r='20'/%3E%3C/g%3E%3C/svg%3E")}
+.hero-inner{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.hero h2{font-size:22px;font-weight:800;color:#fff;line-height:1.2;margin-bottom:5px}
+.hero h2 span{color:var(--lime)}
+.hero p{font-size:13px;color:rgba(255,255,255,.6);margin-bottom:14px}
+.hero-ctas{display:flex;gap:8px;flex-wrap:wrap}
+.hero-stats{display:flex;gap:9px}
+.hstat{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.12);border-radius:11px;padding:9px 14px;text-align:center}
+.hstat .n{font-size:20px;font-weight:800;color:var(--lime);font-family:'Syne',sans-serif}
+.hstat .l{font-size:10px;color:rgba(255,255,255,.5)}
+.hero-swap-icon{font-size:48px;animation:pulse-swap 2s ease-in-out infinite}
+
+/* ── BANNERS ── */
+.guest-banner{background:linear-gradient(135deg,#f5f0e6,#ede6d4);border:2px solid var(--gold);border-radius:13px;padding:13px 17px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.guest-banner p{font-size:13px;color:#6a5030}
+.upgrade-banner{background:var(--purple-bg);border:2px solid var(--purple-border);border-radius:13px;padding:13px 17px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+
+/* ── STATUS MESSAGES ── */
+.status-msg{padding:14px 16px;border-radius:10px;font-size:13px;margin-bottom:12px;display:flex;align-items:center;gap:9px}
+.status-msg.error{background:#f0e0e0;border:1.5px solid #d4aaaa;color:#824040}
+.status-msg.success{background:#c4dcd0;border:1.5px solid #7abda0;color:#2a5a40}
+.status-msg.info{background:var(--purple-bg);border:1.5px solid var(--purple-border);color:var(--purple)}
+
+/* ── FILTER ── */
+.filter-bar{display:flex;gap:5px;margin-bottom:14px;flex-wrap:wrap}
+.chip{background:none;border:2px solid var(--border);border-radius:99px;padding:4px 12px;font-size:12px;cursor:pointer;color:var(--muted);font-weight:600;transition:all .15s}
+.chip:hover{border-color:var(--ink);color:var(--ink)}
+.chip.active{background:var(--ink);border-color:var(--ink);color:#fff}
+
+/* ── GRID ── */
+.listings-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(172px,1fr));gap:13px;margin-bottom:20px}
+.card{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:all .2s;position:relative}
+.card:hover{box-shadow:var(--shadow-lg);transform:translateY(-3px);border-color:var(--border2)}
+.card-stripe{height:5px;width:100%}
+.card-img{height:96px;display:flex;align-items:center;justify-content:center;font-size:38px;background:linear-gradient(135deg,#f0ede8,#e8e4e0);position:relative;overflow:hidden}
+.card-img img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.card-img .ef{z-index:1;position:relative;filter:drop-shadow(0 2px 5px rgba(0,0,0,.12))}
+.dist-pill{position:absolute;bottom:6px;right:6px;background:rgba(255,255,255,.9);border:1px solid var(--border);border-radius:99px;font-size:10px;padding:2px 7px;color:var(--muted);z-index:2;font-weight:600}
+.heart{position:absolute;top:7px;right:7px;background:rgba(255,255,255,.9);border:1.5px solid var(--border);border-radius:99px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;z-index:3;color:var(--muted);transition:all .2s}
+.heart.on{color:#824040;border-color:#d4aaaa;background:#f0e0e0}
+.card-body{padding:10px 12px}
+.card-title{font-size:13px;font-weight:700;margin-bottom:2px;font-family:'Syne',sans-serif;line-height:1.3}
+.card-sub{font-size:11px;color:var(--muted);font-weight:500}
+.card-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+.tag{font-size:10px;padding:2px 7px;border-radius:99px;background:#f0ede8;border:1.5px solid var(--border);color:var(--sub);font-weight:600}
+.tag.w{background:#e4ecf5;border-color:#a8c0d8;color:#4a6a90}
+
+/* ── STRIPE COLOURS ── */
+.stripe-electronics{background:var(--cat-electronics)}
+.stripe-music{background:var(--cat-music)}
+.stripe-outdoors{background:var(--cat-outdoors)}
+.stripe-sports{background:var(--cat-sports)}
+.stripe-books{background:var(--cat-books)}
+.stripe-art{background:var(--cat-art)}
+.stripe-other{background:var(--cat-other)}
+
+/* ── MAP ── */
+.map-box{background:#dddad4;border:2px solid var(--border);border-radius:var(--radius);height:158px;position:relative;overflow:hidden;margin-bottom:14px}
+.mp{position:absolute;transform:translate(-50%,-100%);cursor:pointer;font-size:19px;filter:drop-shadow(0 2px 5px rgba(0,0,0,.3));transition:transform .15s}
+.mp:hover{transform:translate(-50%,-100%) scale(1.25)}
+.mp .tip{position:absolute;bottom:calc(100%+4px);left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;border-radius:7px;padding:4px 10px;font-size:11px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s;font-weight:600}
+.mp:hover .tip{opacity:1}
+.you-dot{position:absolute;width:15px;height:15px;background:var(--coral);border:3px solid #fff;border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 4px rgba(184,100,80,.2);animation:you-pulse 2s ease-in-out infinite}
+@keyframes you-pulse{0%,100%{box-shadow:0 0 0 4px rgba(184,100,80,.2)}50%{box-shadow:0 0 0 8px rgba(184,100,80,.08)}}
+.you-lbl{position:absolute;font-size:10px;color:var(--coral);font-weight:700;transform:translate(-50%,5px);font-family:'Syne',sans-serif}
+
+/* ── SECTIONS ── */
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
+.section-title{font-size:15px;font-weight:800;color:var(--ink)}
+.loc-row{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--muted);margin-bottom:10px;font-weight:500}
+.loc-row strong{color:var(--ink)}
+
+/* ── SUGGESTIONS ── */
+.sug-list{display:flex;flex-direction:column;gap:9px;margin-bottom:20px}
+.sug-card{background:var(--card);border:2px solid #9ab880;border-radius:13px;padding:12px 15px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .18s;position:relative;overflow:hidden}
+.sug-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--lime)}
+.sug-card:hover{box-shadow:var(--shadow);transform:translateX(3px)}
+.sug-score{font-size:11px;padding:3px 9px;border-radius:99px;background:#c4dcd0;color:#2a5a40;font-weight:800;flex-shrink:0;font-family:'Syne',sans-serif}
+.sug-info{flex:1;min-width:0}
+.sug-title{font-size:13px;font-weight:700;margin-bottom:2px;font-family:'Syne',sans-serif}
+.sug-why{font-size:12px;color:var(--muted)}
+
+/* ── OFFER CARDS ── */
+.offer-list{display:flex;flex-direction:column;gap:9px;margin-bottom:20px}
+.offer-card{background:var(--card);border:2px solid var(--border);border-radius:13px;padding:12px 14px;display:flex;align-items:flex-start;gap:10px}
+.offer-card:hover{border-color:var(--border2)}
+.ava{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;font-family:'Syne',sans-serif}
+.ava-coral{background:#ede4e0;color:var(--coral)}
+.ava-blue{background:#e0eaf2;color:#4a6a90}
+.ava-lime{background:#ddecd4;color:#3a6a28}
+.ava-purple{background:#eae8f2;color:var(--purple)}
+.ava-gold{background:#ede6d0;color:#6a5030}
+.om{flex:1;min-width:0}
+.otitle{font-size:13px;font-weight:700;font-family:'Syne',sans-serif}
+.orow{display:flex;align-items:center;gap:5px;margin-top:5px;flex-wrap:wrap}
+.pill{font-size:11px;padding:3px 9px;border-radius:99px;background:#f0ede8;border:1.5px solid var(--border);color:var(--sub);font-weight:600}
+.oacts{display:flex;gap:4px;flex-shrink:0;flex-direction:column;align-items:flex-end}
+.sbadge{font-size:11px;padding:3px 9px;border-radius:99px;font-weight:700}
+.sbadge.pending{background:#ede6d0;color:#6a5030;border:1.5px solid var(--gold)}
+.sbadge.accepted{background:#c4dcd0;color:#2a5a40;border:1.5px solid #7abda0}
+.sbadge.rated{background:var(--purple-bg);color:var(--ink2);border:1.5px solid var(--purple-border)}
+.swap-arrow-icon{color:var(--muted);font-size:13px;font-weight:800}
+
+/* ── THREADS ── */
+.thread-list{display:flex;flex-direction:column;gap:8px}
+.thread{background:var(--card);border:2px solid var(--border);border-radius:13px;padding:11px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .18s}
+.thread:hover{border-color:var(--coral);transform:translateX(3px)}
+.thread.unread{border-color:#a8c0d8;background:#f4f8fc}
+.tinfo{flex:1;min-width:0}
+.tname{font-size:13px;font-weight:700;font-family:'Syne',sans-serif}
+.tprev{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.udot{width:8px;height:8px;background:var(--coral);border-radius:50%;flex-shrink:0}
+
+/* ── TIMELINE ── */
+.timeline{display:flex;flex-direction:column;padding-left:28px;position:relative}
+.timeline::before{content:'';position:absolute;left:10px;top:8px;bottom:8px;width:2px;background:var(--border)}
+.tl-item{position:relative;padding-bottom:16px}
+.tl-item:last-child{padding-bottom:0}
+.tl-dot{position:absolute;left:-22px;top:5px;width:17px;height:17px;border-radius:50%;border:3px solid var(--cream);display:flex;align-items:center;justify-content:center;font-size:8px;z-index:1;color:#fff;font-weight:700}
+.tl-dot.completed{background:var(--lime)}
+.tl-dot.pending{background:var(--gold)}
+.tl-dot.declined{background:var(--muted)}
+.tl-card{background:var(--card);border:2px solid var(--border);border-radius:11px;padding:10px 13px}
+
+/* ── PROFILE ── */
+.profile-bar{display:flex;align-items:center;gap:12px;margin-bottom:16px;background:var(--ink);border-radius:16px;padding:15px 18px;position:relative;overflow:hidden}
+.profile-bar::after{content:'⇄';position:absolute;right:18px;top:50%;transform:translateY(-50%);font-size:55px;opacity:.05;color:#fff;pointer-events:none}
+.p-ava{width:44px;height:44px;border-radius:50%;border:2px solid var(--coral);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;color:#fff;flex-shrink:0;font-family:'Syne',sans-serif;background:var(--ink2)}
+.p-ava img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+.pname{font-size:14px;font-weight:800;color:#fff;font-family:'Syne',sans-serif}
+.prep{font-size:12px;color:rgba(255,255,255,.5);margin-top:2px}
+.stars{color:var(--gold)}
+.inner-tabs{display:flex;gap:4px;margin-bottom:15px;flex-wrap:wrap}
+.itab{padding:5px 13px;border:2px solid var(--border);border-radius:99px;font-size:12px;cursor:pointer;background:none;color:var(--muted);font-weight:700;font-family:'Syne',sans-serif;transition:all .15s}
+.itab.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+.itab:hover:not(.active){border-color:var(--ink);color:var(--ink)}
+
+/* ── PLANS ── */
+.plans-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:14px;margin-bottom:18px}
+.plan-card{background:var(--card);border:2px solid var(--border);border-radius:17px;padding:22px;position:relative}
+.plan-card.featured{border:2px solid var(--coral);background:linear-gradient(160deg,#fdf0ec 0%,#fff 60%)}
+.plan-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--coral),#9e4a38);color:#fff;font-size:11px;font-weight:800;padding:3px 14px;border-radius:99px;white-space:nowrap;font-family:'Syne',sans-serif}
+.plan-name{font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;font-family:'Syne',sans-serif}
+.plan-price{font-size:30px;font-weight:800;color:var(--ink);margin-bottom:2px}
+.plan-price span{font-size:13px;font-weight:500;color:var(--muted);font-family:'Inter',sans-serif}
+.plan-save{font-size:12px;color:#2a5a40;font-weight:700;margin-bottom:14px;background:#c4dcd0;display:inline-block;padding:2px 10px;border-radius:99px}
+.plan-features{list-style:none;margin-bottom:18px;display:flex;flex-direction:column;gap:7px}
+.plan-features li{font-size:13px;display:flex;align-items:center;gap:7px}
+.plan-features li::before{content:'✓';color:#2a5a40;font-weight:800;flex-shrink:0;background:#c4dcd0;width:17px;height:17px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px}
+.plan-features li.no::before{content:'✕';color:var(--muted);background:#e8e4e0}
+.plan-features li.no{color:var(--muted)}
+.plan-pill{font-size:11px;padding:3px 10px;border-radius:99px;font-weight:800;font-family:'Syne',sans-serif}
+.plan-pill.free{background:rgba(255,255,255,.15);color:#fff}
+.plan-pill.monthly{background:#4a6a90;color:#fff}
+.plan-pill.annual{background:linear-gradient(135deg,var(--purple),#7060a8);color:#fff}
+
+/* ── NOTIF TOGGLES ── */
+.notif-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1.5px solid var(--border)}
+.notif-row:last-child{border-bottom:none}
+.toggle{width:40px;height:22px;border-radius:99px;border:none;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+.toggle.on{background:var(--lime)}
+.toggle.off{background:#c8c0b4}
+.toggle::after{content:'';position:absolute;top:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle.on::after{left:21px}
+.toggle.off::after{left:3px}
+
+/* ── PHOTO GRID ── */
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px}
+.photo-slot{height:78px;border:2px dashed var(--border2);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:linear-gradient(135deg,#f0ede8,#e8e4e0);position:relative;overflow:hidden;flex-direction:column;gap:3px;font-size:11px;color:var(--muted);font-weight:500;transition:border-color .15s}
+.photo-slot:hover{border-color:var(--coral)}
+.photo-slot img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.rm-photo{position:absolute;top:4px;right:4px;background:rgba(30,26,46,.65);color:#fff;border:none;border-radius:99px;width:19px;height:19px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2}
+
+/* ── MODAL ── */
+.modal-bd{position:fixed;inset:0;background:rgba(30,26,46,.55);display:flex;align-items:center;justify-content:center;z-index:200;padding:16px;backdrop-filter:blur(4px)}
+.modal{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:22px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto;box-shadow:0 16px 60px rgba(30,26,46,.22)}
+.mhdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.mhdr h3{font-size:16px;font-weight:800;font-family:'Syne',sans-serif}
+.mcls{background:none;border:2px solid var(--border);border-radius:8px;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--muted);transition:all .15s}
+.mcls:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
+.fg{margin-bottom:13px}
+.fg label{font-size:11px;color:var(--muted);display:block;margin-bottom:5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-family:'Syne',sans-serif}
+.fg input,.fg select,.fg textarea{width:100%;border:2px solid var(--border);border-radius:9px;padding:8px 11px;font-size:13px;background:#faf8f5;color:var(--ink);font-family:'Inter',sans-serif;outline:none;transition:border-color .15s}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--coral);background:#fff}
+.fg textarea{resize:vertical;min-height:68px}
+.auth-error{background:#f0e0e0;border:2px solid #d4aaaa;border-radius:9px;padding:9px 13px;font-size:13px;color:#824040;margin-bottom:12px;display:none;font-weight:500}
+.auth-switch{text-align:center;font-size:13px;color:var(--muted);margin-top:13px}
+.auth-switch a{color:var(--coral);cursor:pointer;font-weight:700}
+
+/* ── CHAT ── */
+.chat-wrap{display:flex;flex-direction:column;height:320px}
+.chat-msgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:7px;padding:2px 0 7px}
+.msg{max-width:80%;padding:8px 12px;border-radius:13px;font-size:13px;line-height:1.5}
+.msg.mine{align-self:flex-end;background:var(--ink);color:#fff;border-radius:13px 13px 3px 13px}
+.msg.theirs{align-self:flex-start;background:#f0ede8;border:1.5px solid var(--border);border-radius:13px 13px 13px 3px}
+.msg-time{font-size:10px;opacity:.45;margin-top:3px}
+.chat-foot{display:flex;gap:7px;border-top:2px solid var(--border);padding-top:10px;margin-top:3px}
+.chat-foot input{flex:1;border:2px solid var(--border);border-radius:9px;padding:7px 11px;font-size:13px;background:#faf8f5;font-family:'Inter',sans-serif;outline:none;transition:border-color .15s}
+.chat-foot input:focus{border-color:var(--coral);background:#fff}
+.send-btn{background:var(--coral);border:none;border-radius:9px;padding:7px 13px;cursor:pointer;color:#fff;font-size:15px;transition:all .15s}
+.send-btn:hover{background:#9e4a38}
+
+/* ── REPORT ── */
+.report-opts{display:flex;flex-direction:column;gap:6px}
+.report-opt{background:#faf8f5;border:2px solid var(--border);border-radius:9px;padding:9px 12px;cursor:pointer;font-size:13px;text-align:left;font-family:'Inter',sans-serif;transition:all .15s}
+.report-opt:hover,.report-opt.sel{border-color:#d4aaaa;background:#f0e0e0;color:#824040}
+
+/* ── USER PROFILE MODAL ── */
+.user-hero{text-align:center;padding:14px 0 12px}
+.user-ava-lg{width:62px;height:62px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;margin:0 auto 10px;border:2px solid var(--coral);font-family:'Syne',sans-serif;background:linear-gradient(135deg,var(--ink),var(--ink2))}
+.user-ava-lg img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+.user-name{font-size:17px;font-weight:800;font-family:'Syne',sans-serif}
+.user-meta{font-size:13px;color:var(--muted);margin-top:3px}
+.user-bio{font-size:13px;color:var(--muted);margin-top:9px;line-height:1.6;background:linear-gradient(135deg,#f0ede8,#e8e4e0);border-radius:11px;padding:10px 13px}
+.user-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.ustat{background:var(--cream);border:2px solid var(--border);border-radius:10px;padding:9px;text-align:center}
+.ustat .n{font-size:19px;font-weight:800;font-family:'Syne',sans-serif}
+.ustat .l{font-size:10px;color:var(--muted);font-weight:600;margin-top:1px}
+.user-listings{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+
+/* ── STAR RATING ── */
+.star-btn{background:none;border:none;font-size:27px;cursor:pointer;color:var(--border2);padding:0 2px;transition:all .15s}
+.star-btn.lit{color:var(--gold)}
+.star-btn:hover{transform:scale(1.15)}
+
+/* ── LANDING ── */
+.landing{min-height:100vh;background:var(--cream)}
+.landing-nav{background:var(--ink);border-bottom:2px solid var(--coral);padding:13px 24px;display:flex;align-items:center;justify-content:space-between}
+.landing-hero{padding:56px 24px 38px;text-align:center;max-width:660px;margin:0 auto}
+.landing-hero h1{font-size:44px;font-weight:800;line-height:1.1;margin-bottom:13px;color:var(--ink)}
+.landing-hero h1 em{font-style:normal;color:var(--coral)}
+.landing-hero p{font-size:16px;color:var(--muted);margin-bottom:28px;line-height:1.65}
+.landing-ctas{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:44px}
+.landing-marquee{overflow:hidden;background:var(--ink);padding:10px 0;margin-bottom:44px}
+.marquee-inner{display:flex;animation:marquee 20s linear infinite;white-space:nowrap}
+@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.marquee-item{padding:0 26px;font-size:13px;font-weight:700;color:rgba(255,255,255,.6);font-family:'Syne',sans-serif}
+.marquee-item span{color:var(--lime);margin-right:7px}
+.landing-features{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:13px;max-width:860px;margin:0 auto 44px;padding:0 24px}
+.feat-card{background:var(--card);border:2px solid var(--border);border-radius:15px;padding:20px;text-align:center;transition:all .2s}
+.feat-card:hover{border-color:var(--coral);transform:translateY(-3px);box-shadow:var(--shadow)}
+.feat-icon{font-size:32px;margin-bottom:11px;display:block}
+.feat-title{font-size:14px;font-weight:800;margin-bottom:5px;font-family:'Syne',sans-serif}
+.feat-desc{font-size:13px;color:var(--muted);line-height:1.5}
+.browse-preview{max-width:900px;margin:0 auto;padding:0 24px 52px}
+.browse-preview h2{font-size:22px;font-weight:800;margin-bottom:16px;text-align:center}
+
+/* ── EMPTY / LOCKED ── */
+.empty{text-align:center;padding:34px;color:var(--muted)}
+.empty .ei{font-size:34px;margin-bottom:10px;display:block}
+.empty p{font-size:14px;font-weight:500}
+.locked-msg{text-align:center;padding:50px 20px;background:var(--card);border:2px solid var(--border);border-radius:18px}
+
+/* ── TELR PAYMENT ── */
+.payment-info{background:linear-gradient(135deg,#eae8f2,#f0ede8);border:2px solid var(--purple-border);border-radius:12px;padding:14px;margin-bottom:16px}
+.payment-steps{display:flex;flex-direction:column;gap:10px}
+.payment-step{display:flex;align-items:flex-start;gap:10px}
+.step-num{width:24px;height:24px;background:var(--purple);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;font-family:'Syne',sans-serif}
+.step-text{font-size:13px;color:var(--sub);line-height:1.5}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--ink);border:2px solid rgba(255,255,255,.12);border-radius:13px;padding:10px 16px;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;z-index:300;box-shadow:var(--shadow-lg);transform:translateY(60px);opacity:0;transition:all .28s;color:#fff;font-family:'Syne',sans-serif}
+.toast.show{transform:translateY(0);opacity:1}
+
+/* ── SPINNER ── */
+.spinner{width:20px;height:20px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none}
+.spinner.show{display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:600px){.landing-hero h1{font-size:30px}.hero h2{font-size:17px}.plans-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- Loading screen -->
+<div class="loading-screen" id="loading-screen">
+  <div class="loading-logo">⇄</div>
+  <div class="loading-title">InstaSwap</div>
+  <div class="loading-sub">Loading Dubai's swap market...</div>
+  <div class="loading-bar"><div class="loading-bar-inner"></div></div>
+</div>
+
+<div id="app-root"></div>
+<div id="modal-root"></div>
+<div class="toast" id="toast"><span id="toast-icon">✓</span><span id="toast-msg"></span></div>
+
+<script>
+// ══════════════════════════════════════════════
+// ⚙️  CONFIGURATION — paste your keys here
+// ══════════════════════════════════════════════
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+
+// Telr config (get from telr.com merchant portal)
+const TELR_STORE_ID = 'YOUR_TELR_STORE_ID';
+const TELR_AUTH_KEY = 'YOUR_TELR_AUTH_KEY';
+const TELR_TEST_MODE = true; // set false for live payments
+const APP_URL = window.location.origin; // your Netlify URL
+
+// ══════════════════════════════════════════════
+// INIT SUPABASE
+// ══════════════════════════════════════════════
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+let currentUser = null;    // Supabase auth user
+let userProfile = null;    // profiles row
+let userPlan = 'free';
+let userCity = 'Dubai, UAE';
+let listings = [];
+let myListings = [];
+let offers = [];
+let threads = [];
+let savedIds = new Set();
+let notifPrefs = {newOffers:true,messages:true,offerAccepted:true,nearbyListings:false,weeklyDigest:true};
+let addPhotoSlots = [];
+let activeTab = 'browse';
+let activeFilter = 'All';
+let searchQ = '';
+let mineTab = 'listings';
+let _ratingVal = 0;
+
+const cats = ['All','Electronics','Music','Outdoors','Sports','Books','Art'];
+const PLAN_LIMITS = {
+  free:    {listings:2, offers:3, messages:false, suggestions:false, label:'Free'},
+  monthly: {listings:20, offers:999, messages:true, suggestions:true, label:'Monthly Pro'},
+  annual:  {listings:999, offers:999, messages:true, suggestions:true, label:'Annual Pro'},
+};
+const PINS=[{top:'30%',left:'45%'},{top:'55%',left:'28%'},{top:'42%',left:'67%'},{top:'65%',left:'52%'},{top:'25%',left:'70%'},{top:'70%',left:'30%'}];
+const AVA_COLORS=['ava-coral','ava-blue','ava-lime','ava-purple','ava-gold'];
+
+function getPlan(){return userPlan;}
+function canDo(f){const p=PLAN_LIMITS[getPlan()];if(f==='list')return myListings.length<p.listings;if(f==='offer')return offers.filter(o=>o.from_user_id===currentUser?.id).length<p.offers;if(f==='message')return p.messages;if(f==='suggestions')return p.suggestions;return false;}
+function avaColor(s){let h=0;for(let c of (s||'A'))h=c.charCodeAt(0)+((h<<5)-h);return AVA_COLORS[Math.abs(h)%AVA_COLORS.length];}
+function catSlug(c){return (c||'other').toLowerCase();}
+function initials(name){return (name||'?').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();}
+
+// ══════════════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════════════
+async function boot(){
+  // Check if keys are configured
+  if(SUPABASE_URL==='YOUR_SUPABASE_URL'){
+    document.getElementById('loading-screen').classList.add('hide');
+    document.getElementById('app-root').innerHTML = `
+      <div style="max-width:560px;margin:60px auto;padding:20px;text-align:center">
+        <div style="font-size:48px;margin-bottom:16px">⚙️</div>
+        <h2 style="font-family:'Syne',sans-serif;font-size:22px;margin-bottom:12px">Configure your Supabase keys</h2>
+        <p style="color:#7a746e;font-size:14px;line-height:1.7;margin-bottom:20px">
+          Open <code style="background:#f0ede8;padding:2px 6px;border-radius:5px">instaswap.html</code> in a text editor and replace
+          <code style="background:#f0ede8;padding:2px 6px;border-radius:5px">YOUR_SUPABASE_URL</code> and
+          <code style="background:#f0ede8;padding:2px 6px;border-radius:5px">YOUR_SUPABASE_ANON_KEY</code>
+          at the top of the script with your values from the Supabase dashboard (Settings → API).
+        </p>
+        <div style="background:#f0ede8;border-radius:12px;padding:16px;text-align:left;font-size:13px;font-family:monospace;line-height:2">
+          const SUPABASE_URL = '<span style="color:#b86450">https://xxxx.supabase.co</span>';<br>
+          const SUPABASE_ANON_KEY = '<span style="color:#b86450">eyJhbGci...</span>';
+        </div>
+      </div>`;
+    return;
+  }
+
+  // Listen for auth changes
+  db.auth.onAuthStateChange(async (event, session) => {
+    if(session?.user){
+      currentUser = session.user;
+      await loadProfile();
+    } else {
+      currentUser = null;
+      userProfile = null;
+      userPlan = 'free';
+    }
+    await loadListings();
+    hideLoading();
+    renderApp();
+  });
+
+  // Check current session
+  const { data: { session } } = await db.auth.getSession();
+  if(!session){ hideLoading(); renderApp(); }
+}
+
+function hideLoading(){
+  setTimeout(()=>document.getElementById('loading-screen').classList.add('hide'), 600);
+}
+
+// ══════════════════════════════════════════════
+// DATA LOADERS
+// ══════════════════════════════════════════════
+async function loadProfile(){
+  if(!currentUser) return;
+  const { data } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
+  if(data){
+    userProfile = data;
+    userPlan = data.plan || 'free';
+    userCity = data.city || 'Dubai, UAE';
+  }
+}
+
+async function loadListings(){
+  const { data, error } = await db.from('listings')
+    .select(`*, profiles(name, rep, swaps_count, city, bio)`)
+    .eq('is_active', true)
+    .order('created_at', {ascending:false})
+    .limit(50);
+  if(data) listings = data.map(l=>({
+    ...l,
+    owner: l.profiles?.name || 'Unknown',
+    ownerRep: l.profiles?.rep || 5.0,
+    ownerSwaps: l.profiles?.swaps_count || 0,
+    ownerBio: l.profiles?.bio || '',
+    ownerCity: l.profiles?.city || 'Dubai, UAE',
+    dist: (Math.random()*4+0.3).toFixed(1)+' km', // TODO: real geo distance
+  }));
+}
+
+async function loadMyListings(){
+  if(!currentUser) return;
+  const { data } = await db.from('listings').select('*').eq('user_id', currentUser.id).eq('is_active', true).order('created_at',{ascending:false});
+  if(data) myListings = data;
+}
+
+async function loadOffers(){
+  if(!currentUser) return;
+  const { data } = await db.from('offers')
+    .select(`*, from_profile:profiles!offers_from_user_id_fkey(name,rep,swaps_count,city), their_listing:listings!offers_their_listing_id_fkey(title,emoji,photo_urls), my_listing:listings!offers_my_listing_id_fkey(title,emoji)`)
+    .or(`from_user_id.eq.${currentUser.id},to_user_id.eq.${currentUser.id}`)
+    .order('created_at',{ascending:false});
+  if(data) offers = data.map(o=>({
+    ...o,
+    from: o.from_profile?.name || 'Unknown',
+    fromInit: initials(o.from_profile?.name),
+    fromRep: o.from_profile?.rep || 5.0,
+    fromDist: (Math.random()*4+0.3).toFixed(1)+' km',
+    fromSwaps: o.from_profile?.swaps_count || 0,
+    theirItem: o.their_listing?.title || '',
+    theirEmoji: o.their_listing?.emoji || '📦',
+    myItem: o.my_listing?.title || '',
+    myEmoji: o.my_listing?.emoji || '📦',
+  }));
+}
+
+async function loadThreads(){
+  if(!currentUser) return;
+  // Load unique conversations from offers involving this user
+  const { data: myOffers } = await db.from('offers')
+    .select(`id, from_user_id, to_user_id, from_profile:profiles!offers_from_user_id_fkey(name), to_profile:profiles!offers_to_user_id_fkey(name)`)
+    .or(`from_user_id.eq.${currentUser.id},to_user_id.eq.${currentUser.id}`);
+  if(!myOffers) return;
+
+  threads = await Promise.all(myOffers.map(async o=>{
+    const otherId = o.from_user_id === currentUser.id ? o.to_user_id : o.from_user_id;
+    const otherName = o.from_user_id === currentUser.id ? o.to_profile?.name : o.from_profile?.name;
+    const { data: msgs } = await db.from('messages').select('*').eq('offer_id',o.id).order('created_at',{ascending:true});
+    const lastMsg = msgs?.[msgs.length-1];
+    const unread = lastMsg && lastMsg.sender_id !== currentUser.id;
+    return {id:o.id, with:otherName||'Unknown', withInit:initials(otherName), unread, messages:(msgs||[]).map(m=>({from:m.sender_id===currentUser.id?'me':'them',text:m.content,time:new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}))};
+  }));
+}
+
+async function loadSaved(){
+  if(!currentUser) return;
+  const { data } = await db.from('saved_listings').select('listing_id').eq('user_id',currentUser.id);
+  if(data) savedIds = new Set(data.map(r=>r.listing_id));
+}
+
+// ══════════════════════════════════════════════
+// ROOT
+// ══════════════════════════════════════════════
+function renderApp(){
+  if(!currentUser){ renderLanding(); }
+  else { renderMain(); }
+}
+
+// ── LANDING ──
+function renderLanding(){
+  const marqueeItems=['Electronics ⇄ Gaming','Music gear ⇄ Art','Books ⇄ Outdoors','Sports ⇄ Tech','Cameras ⇄ Laptops','Instruments ⇄ Watches'];
+  const marquee=marqueeItems.map(i=>`<span class="marquee-item"><span>⇄</span>${i}</span>`).join('');
+  document.getElementById('app-root').innerHTML=`
+  <div class="landing">
+    <nav class="landing-nav">
+      <div class="logo"><div class="logo-icon">⇄</div><span class="logo-text">Insta<span>Swap</span></span></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost-dark" onclick="openLogin()">Sign in</button>
+        <button class="btn btn-coral" onclick="openSignup()">Join free</button>
+      </div>
+    </nav>
+    <div class="landing-hero">
+      <h1>Give stuff.<br>Get stuff.<br><em>No cash.</em></h1>
+      <p>InstaSwap connects Dubai traders to exchange items directly — no money, no fees, no middleman. Just honest swaps.</p>
+      <div class="landing-ctas">
+        <button class="btn btn-coral" style="padding:12px 28px;font-size:15px;font-family:Syne,sans-serif" onclick="openSignup()">Start swapping free →</button>
+        <button class="btn btn-outline" style="padding:12px 22px;font-size:14px" onclick="browseAsGuest()">Browse listings</button>
+      </div>
+    </div>
+    <div class="landing-marquee"><div class="marquee-inner">${marquee}${marquee}</div></div>
+    <div class="landing-features">
+      <div class="feat-card"><span class="feat-icon">🔄</span><div class="feat-title">Zero cash</div><div class="feat-desc">Trade directly — no payment, fees, or financial risk ever.</div></div>
+      <div class="feat-card"><span class="feat-icon">📍</span><div class="feat-title">Dubai-local</div><div class="feat-desc">Find traders in your neighbourhood and meet safely.</div></div>
+      <div class="feat-card"><span class="feat-icon">⭐</span><div class="feat-title">Trusted community</div><div class="feat-desc">Ratings and reviews keep every swap honest.</div></div>
+      <div class="feat-card"><span class="feat-icon">✨</span><div class="feat-title">Smart matching</div><div class="feat-desc">We surface listings that match exactly what you're after.</div></div>
+    </div>
+    <div class="browse-preview">
+      <h2>Live listings near Dubai, UAE</h2>
+      <div class="listings-grid">
+        ${listings.slice(0,4).map(l=>`
+          <div class="card" onclick="openSignup()">
+            <div class="card-stripe stripe-${catSlug(l.category)}"></div>
+            <div class="card-img">${l.photo_urls&&l.photo_urls[0]?`<img src="${l.photo_urls[0]}" alt="${l.title}">`:`<span class="ef">${l.emoji}</span>`}<span class="dist-pill">📍 ${l.dist}</span></div>
+            <div class="card-body">
+              <div class="card-title">${l.title}</div>
+              <div class="card-sub">${l.owner} <span class="stars">★</span>${l.ownerRep}</div>
+              <div class="card-tags"><span class="tag">${l.condition}</span><span class="tag w">wants: ${(l.wants||[])[0]||'offers'}</span></div>
+            </div>
+          </div>`).join('')}
+        ${listings.length===0?`<div class="empty" style="grid-column:1/-1"><div class="ei">📦</div><p>Be the first to list an item in Dubai!</p></div>`:''}
+      </div>
+      <div style="text-align:center;margin-top:14px"><button class="btn btn-outline" onclick="browseAsGuest()">See all listings →</button></div>
+    </div>
+  </div>`;
+}
+
+function browseAsGuest(){
+  // Keep currentUser null but show main app in read-only mode
+  currentUser = 'guest';
+  renderMain();
+}
+
+// ── MAIN APP ──
+function renderMain(){
+  const isGuest = currentUser==='guest';
+  const user = isGuest ? {name:'Guest'} : (userProfile||{name:currentUser?.email?.split('@')[0]||'You'});
+  const plan = getPlan();
+  document.getElementById('app-root').innerHTML=`
+  <nav class="nav">
+    <div class="logo" onclick="currentUser=null;userProfile=null;renderApp()"><div class="logo-icon">⇄</div><span class="logo-text">Insta<span>Swap</span></span></div>
+    <div class="search-wrap"><span class="si">⌕</span><input type="text" id="search-inp" placeholder="Search listings..." oninput="onSearch()"></div>
+    <div class="nav-tabs">
+      <button class="tab active" id="tab-browse" onclick="switchTab('browse')">Browse</button>
+      ${!isGuest?`
+      <button class="tab" id="tab-offers" onclick="switchTab('offers')">Offers<span class="badge" id="bdg-offers" style="display:none"></span></button>
+      <button class="tab" id="tab-messages" onclick="switchTab('messages')">Messages<span class="badge" id="bdg-msgs" style="display:none"></span></button>
+      <button class="tab" id="tab-mine" onclick="switchTab('mine')">Mine</button>`:''}
+    </div>
+    <div class="nav-auth">
+      ${isGuest?`<button class="btn btn-ghost-dark" onclick="openLogin()">Sign in</button><button class="btn btn-coral" onclick="openSignup()">Join free</button>`:`
+        <span class="plan-pill ${plan}">${PLAN_LIMITS[plan].label}</span>
+        <button class="btn btn-ghost-dark" style="padding:5px 11px" onclick="openUserMenu()">${initials(user.name)} ▾</button>
+      `}
+    </div>
+  </nav>
+  <div class="content" id="content"></div>`;
+  render();
+}
+
+// ── TABS ──
+function switchTab(t){
+  if(currentUser==='guest'&&t!=='browse'){openLogin();return;}
+  activeTab=t;
+  ['browse','offers','messages','mine'].forEach(x=>{const el=document.getElementById('tab-'+x);if(el)el.classList.toggle('active',x===t);});
+  if(t==='offers') loadOffers().then(render);
+  else if(t==='messages') loadThreads().then(render);
+  else if(t==='mine') loadMyListings().then(render);
+  else render();
+}
+function onSearch(){searchQ=document.getElementById('search-inp').value.toLowerCase();if(activeTab!=='browse')switchTab('browse');else render();}
+function render(){
+  const c=document.getElementById('content');if(!c)return;
+  if(activeTab==='browse')c.innerHTML=renderBrowse();
+  else if(activeTab==='offers')c.innerHTML=renderOffers();
+  else if(activeTab==='messages')c.innerHTML=renderMessages();
+  else c.innerHTML=renderMine();
+  updateBadges();
+}
+function updateBadges(){
+  const p=offers.filter(o=>o.status==='pending'&&o.to_user_id===currentUser?.id).length;
+  const be=document.getElementById('bdg-offers');if(be)be.style.display=p?'':'none';
+  const u=threads.filter(t=>t.unread).length;
+  const bm=document.getElementById('bdg-msgs');if(bm)bm.style.display=u?'':'none';
+}
+
+// ── BROWSE ──
+function computeSuggestions(){
+  if(!myListings.length) return [];
+  const myWants=myListings.flatMap(l=>(l.wants||[]).map(w=>w.toLowerCase()));
+  const myCats=myListings.map(l=>l.category);
+  return listings.filter(l=>l.user_id!==currentUser?.id).map(l=>{
+    let score=0;const reasons=[];
+    if(myCats.includes(l.category)){score+=30;reasons.push('matches a category you list in');}
+    const tl=(l.title||'').toLowerCase();
+    myWants.forEach(w=>{if(tl.includes(w.split(' ')[0])||w.includes(tl.split(' ')[0])){score+=40;reasons.push(`matches your want: "${w}"`);}});
+    const myT=myListings.map(m=>(m.title||'').toLowerCase());
+    (l.wants||[]).forEach(w=>{const wl=w.toLowerCase();myT.forEach(mt=>{if(mt.includes(wl.split(' ')[0])||wl.includes(mt.split(' ')[0])){score+=50;reasons.push(`they want something like your "${mt}"`);}});});
+    const d=parseFloat(l.dist)||3;if(d<2)score+=20;else if(d<4)score+=10;
+    if(l.ownerRep>=4.8)score+=10;
+    if(savedIds.has(l.id)){score+=25;reasons.push("you've saved this");}
+    return{...l,score,why:[...new Set(reasons)][0]||'similar to your interests'};
+  }).filter(l=>l.score>0).sort((a,b)=>b.score-a.score).slice(0,3);
+}
+
+function renderBrowse(){
+  const isGuest=currentUser==='guest';
+  const sugs=!isGuest&&canDo('suggestions')?computeSuggestions():[];
+  let filtered=listings.filter(l=>{
+    const mq=!searchQ||(l.title?.toLowerCase().includes(searchQ)||l.category?.toLowerCase().includes(searchQ)||l.owner?.toLowerCase().includes(searchQ)||(l.wants||[]).join(' ').toLowerCase().includes(searchQ));
+    return mq&&(activeFilter==='All'||l.category===activeFilter);
+  });
+  return `
+  <div class="hero">
+    <div class="hero-inner">
+      <div>
+        <h2>Give what you have.<br>Get what you <span>need.</span></h2>
+        <p>No cash. No fees. Real people, real trades in Dubai.</p>
+        <div class="hero-ctas">
+          ${isGuest?`<button class="btn btn-coral" onclick="openSignup()">Join free →</button><button class="btn btn-ghost-dark" onclick="openLogin()">Sign in</button>`:`<button class="btn btn-coral" onclick="openAddListing()">+ List an item</button><button class="btn btn-ghost-dark" style="font-size:12px" onclick="openLocationModal()">📍 ${userCity}</button>`}
+        </div>
+      </div>
+      <div class="hero-stats">
+        <div class="hstat"><div class="n">${listings.length}</div><div class="l">listings</div></div>
+        <div class="hstat"><div class="n">${savedIds.size}</div><div class="l">saved</div></div>
+        <div style="display:flex;align-items:center;padding:0 6px"><span class="hero-swap-icon">⇄</span></div>
+      </div>
+    </div>
+  </div>
+  ${isGuest?`<div class="guest-banner"><p>👋 Browsing as guest. <strong>Sign in to propose swaps, save items & message traders.</strong></p><div style="display:flex;gap:7px"><button class="btn btn-outline" style="padding:5px 12px;font-size:12px" onclick="openLogin()">Sign in</button><button class="btn btn-coral" style="padding:5px 12px;font-size:12px" onclick="openSignup()">Join free</button></div></div>`:''}
+  <div class="loc-row">📍 Near <strong style="margin-left:2px">${userCity}</strong>${!isGuest?`<button class="btn-sm" style="margin-left:8px" onclick="openLocationModal()">Change</button>`:''}</div>
+  ${renderMap(filtered)}
+  ${sugs.length?`
+  <div class="sec-hdr"><span class="section-title">✨ Suggested for you</span><span style="font-size:12px;color:var(--muted)">Based on your listings</span></div>
+  <div class="sug-list">${sugs.map(s=>`
+    <div class="sug-card" onclick="openListing('${s.id}')">
+      <span style="font-size:26px">${s.emoji}</span>
+      <div class="sug-info"><div class="sug-title">${s.title} <span style="font-size:11px;color:var(--muted);font-weight:400">· ${s.dist}</span></div><div class="sug-why">💡 ${s.why}</div></div>
+      <span class="sug-score">${Math.min(s.score,99)}% match</span>
+    </div>`).join('')}
+  </div>`:''}
+  ${!isGuest&&getPlan()==='free'?`<div class="upgrade-banner"><div><div style="font-size:13px;font-weight:800;color:var(--purple)">✨ Unlock swap suggestions</div><div style="font-size:12px;color:var(--muted);margin-top:2px">Upgrade to see AI-matched listings based on your items</div></div><button class="btn-purple" style="padding:6px 14px;font-size:12px" onclick="setMineTab('subscription');switchTab('mine')">Upgrade →</button></div>`:''}
+  <div class="sec-hdr">
+    <span class="section-title">${searchQ?`Results for "${searchQ}"`:'All listings'}</span>
+    ${!isGuest?`<button class="btn btn-coral" style="padding:6px 13px;font-size:12px" onclick="openAddListing()">+ List item</button>`:''}
+  </div>
+  <div class="filter-bar">${cats.map(c=>`<button class="chip ${activeFilter===c?'active':''}" onclick="setFilter('${c}')">${c}</button>`).join('')}</div>
+  <div class="listings-grid">
+    ${filtered.length===0?`<div class="empty" style="grid-column:1/-1"><div class="ei">🔍</div><p>${listings.length===0?'No listings yet — be the first to post!':'No listings match your search.'}</p></div>`:
+    filtered.map(l=>`
+      <div class="card" onclick="openListing('${l.id}')">
+        <div class="card-stripe stripe-${catSlug(l.category)}"></div>
+        <div class="card-img">
+          ${l.photo_urls&&l.photo_urls[0]?`<img src="${l.photo_urls[0]}" alt="${l.title}">`:`<span class="ef">${l.emoji}</span>`}
+          <span class="dist-pill">📍 ${l.dist}</span>
+          ${!isGuest?`<button class="heart ${savedIds.has(l.id)?'on':''}" onclick="event.stopPropagation();toggleSave('${l.id}')" title="Save">♥</button>`:''}
+        </div>
+        <div class="card-body">
+          <div class="card-title">${l.title}</div>
+          <div class="card-sub" onclick="event.stopPropagation();openUserProfile('${l.id}')" style="cursor:pointer;color:var(--coral);font-weight:600">${l.owner} <span class="stars">★</span>${l.ownerRep}</div>
+          <div class="card-tags"><span class="tag">${l.condition}</span>${(l.wants||[]).slice(0,1).map(w=>`<span class="tag w">wants: ${w}</span>`).join('')}</div>
+        </div>
+      </div>`).join('')}
+  </div>`;
+}
+
+function renderMap(filteredListings){
+  const shown=(filteredListings||listings).slice(0,6);
+  const pins=shown.map((l,i)=>`<div class="mp" style="top:${PINS[i].top};left:${PINS[i].left}" onclick="event.stopPropagation();openListing('${l.id}')">${l.emoji}<div class="tip">${l.title} · ${l.dist}</div></div>`).join('');
+  return `<div class="map-box" style="margin-bottom:14px">
+    <svg class="map-bg" viewBox="0 0 500 158" xmlns="http://www.w3.org/2000/svg">
+      <rect width="500" height="158" fill="#dddad4"/>
+      <defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="#c4beb6" stroke-width="0.7"/></pattern></defs>
+      <rect width="500" height="158" fill="url(#grid)" opacity="0.5"/>
+      <path d="M0,80 Q70,60 150,85 Q230,110 310,75 Q390,42 500,72" fill="none" stroke="#b0a898" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M0,40 Q90,50 185,36 Q275,20 365,50 Q435,66 500,36" fill="none" stroke="#b0a898" stroke-width="2.5" stroke-linecap="round"/>
+      <rect x="50" y="47" width="27" height="17" rx="4" fill="#bab4ac"/>
+      <rect x="165" y="90" width="23" height="14" rx="4" fill="#bab4ac"/>
+      <rect x="280" y="50" width="33" height="19" rx="4" fill="#bab4ac"/>
+      <text x="10" y="152" font-size="11" fill="#8a8278" font-family="Syne,sans-serif" font-weight="700">${userCity} area</text>
+    </svg>
+    ${pins}
+    <div class="you-dot" style="top:58%;left:50%"></div>
+    <div class="you-lbl" style="top:58%;left:50%;position:absolute">You</div>
+  </div>`;
+}
+
+// ── OFFERS ──
+function renderOffers(){
+  const pending=offers.filter(o=>o.status==='pending'&&o.to_user_id===currentUser?.id).length;
+  return `
+  <div class="sec-hdr"><span class="section-title">Swap offers</span><span style="font-size:12px;color:var(--muted);font-weight:600">${pending} pending</span></div>
+  <div class="offer-list">
+    ${offers.length===0?`<div class="empty"><div class="ei">📥</div><p>No offers yet — browse listings to propose a swap!</p></div>`:
+    offers.map(o=>`
+      <div class="offer-card">
+        <div class="ava ${avaColor(o.from)}" onclick="openOfferUserProfile('${o.from}','${o.fromInit}',${o.fromRep},${o.fromSwaps})" style="cursor:pointer">${o.fromInit}</div>
+        <div class="om">
+          <div class="otitle">${o.from} <span style="font-weight:500;color:var(--muted);font-size:11px">· ${o.fromDist} · <span class="stars">★</span>${o.fromRep}</span></div>
+          <div class="orow"><span class="pill">${o.theirEmoji} ${o.theirItem}</span><span class="swap-arrow-icon">⇄</span><span class="pill">${o.myEmoji} ${o.myItem}</span></div>
+          ${o.message?`<div style="font-size:12px;color:var(--muted);margin-top:6px;font-style:italic;background:#f0ede8;padding:6px 9px;border-radius:7px">"${o.message}"</div>`:''}
+        </div>
+        <div class="oacts">
+          ${o.status==='pending'&&o.to_user_id===currentUser?.id?`
+            <button class="btn-acc" onclick="acceptOffer('${o.id}')">Accept ✓</button>
+            <button class="btn-blue" onclick="openThread('${o.id}')">💬 Chat</button>
+            <button class="btn-dec" onclick="declineOffer('${o.id}')">✕</button>
+            <button class="btn-red" onclick="openReport('offer','${o.id}','${o.from}')">⚑</button>
+          `:o.status==='pending'&&o.from_user_id===currentUser?.id?`
+            <span class="sbadge pending">Sent</span>
+            <button class="btn-blue" onclick="openThread('${o.id}')">💬 Chat</button>
+          `:o.status==='accepted'&&!o.rated?`
+            <span class="sbadge accepted">Accepted</span>
+            <button class="btn-blue" onclick="openThread('${o.id}')">💬 Chat</button>
+            <button class="btn-blue" style="border-color:var(--gold);color:#6a5030" onclick="openRating('${o.id}','${o.from}')">⭐ Rate</button>
+          `:`<span class="sbadge ${o.rated?'rated':'accepted'}">${o.rated?'Rated ⭐':'Accepted'}</span>`}
+        </div>
+      </div>`).join('')}
+  </div>`;
+}
+
+// ── MESSAGES ──
+function renderMessages(){
+  if(!canDo('message')&&getPlan()==='free'){
+    return `<div class="locked-msg"><div style="font-size:42px;margin-bottom:13px">💬</div><div style="font-size:19px;font-weight:800;margin-bottom:8px;font-family:'Syne',sans-serif">Messaging is a Pro feature</div><div style="font-size:14px;color:var(--muted);margin-bottom:24px;max-width:320px;margin-left:auto;margin-right:auto;line-height:1.6">Chat directly with traders, coordinate meetups, and close deals faster.</div><button class="btn-purple" onclick="setMineTab('subscription');switchTab('mine')">See plans →</button></div>`;
+  }
+  return `
+  <div class="sec-hdr"><span class="section-title">Messages</span></div>
+  <div class="thread-list">
+    ${threads.length===0?`<div class="empty"><div class="ei">💬</div><p>No messages yet.</p></div>`:
+    threads.map(t=>`
+      <div class="thread ${t.unread?'unread':''}" onclick="openThread('${t.id}')">
+        <div class="ava ${avaColor(t.with)}">${t.withInit}</div>
+        <div class="tinfo"><div class="tname">${t.with}</div><div class="tprev">${t.messages[t.messages.length-1]?.text||''}</div></div>
+        ${t.unread?'<div class="udot"></div>':''}
+        <span style="color:var(--muted);font-size:18px;font-weight:700">›</span>
+      </div>`).join('')}
+  </div>`;
+}
+
+// ── MINE ──
+function renderMine(){
+  const user=userProfile||{};
+  const plan=getPlan();
+  const planLabels={free:'Free',monthly:'Monthly Pro',annual:'Annual Pro'};
+  return `
+  <div class="profile-bar">
+    <div class="p-ava">${user.avatar_url?`<img src="${user.avatar_url}" alt="avatar">`:(initials(user.name)||'?')}</div>
+    <div style="flex:1">
+      <div class="pname">${user.name||'Your profile'} <span class="plan-pill ${plan}" style="font-size:11px;margin-left:5px">${planLabels[plan]}</span></div>
+      <div class="prep"><span class="stars">★★★★★</span> ${user.rep||5.0} · ${user.swaps_count||0} swaps · 📍 ${userCity}</div>
+    </div>
+    <div style="display:flex;gap:6px;position:relative;z-index:1">
+      <button class="btn btn-ghost-dark" style="padding:5px 11px;font-size:12px" onclick="openEditProfile()">Edit</button>
+      <button class="btn btn-coral" style="padding:5px 13px;font-size:12px" onclick="openAddListing()">+ Add</button>
+    </div>
+  </div>
+  <div class="inner-tabs">
+    <button class="itab ${mineTab==='listings'?'active':''}" onclick="setMineTab('listings')">Listings</button>
+    <button class="itab ${mineTab==='wishlist'?'active':''}" onclick="setMineTab('wishlist')">Wishlist (${savedIds.size})</button>
+    <button class="itab ${mineTab==='history'?'active':''}" onclick="setMineTab('history')">History</button>
+    <button class="itab ${mineTab==='subscription'?'active':''}" onclick="setMineTab('subscription')">⭐ Plans</button>
+    <button class="itab ${mineTab==='notifs'?'active':''}" onclick="setMineTab('notifs')">Notifications</button>
+  </div>
+  ${mineTab==='listings'?renderMyListings():mineTab==='wishlist'?renderWishlist():mineTab==='history'?renderHistory():mineTab==='subscription'?renderSubscription():renderNotifPrefs()}`;
+}
+
+function renderMyListings(){
+  const limit=PLAN_LIMITS[getPlan()].listings;
+  if(!myListings.length)return`<div class="empty"><div class="ei">📦</div><p>No listings yet — add your first item!</p></div>`;
+  return`
+  <div style="font-size:13px;color:var(--muted);font-weight:600;margin-bottom:12px">Used <strong style="color:var(--ink)">${myListings.length} / ${limit===999?'∞':limit}</strong> listings ${myListings.length>=limit&&limit!==999?`· <a style="color:var(--coral);cursor:pointer;text-decoration:underline" onclick="setMineTab('subscription')">upgrade for more</a>`:''}</div>
+  <div class="listings-grid">${myListings.map(l=>`
+    <div class="card">
+      <div class="card-stripe stripe-${catSlug(l.category)}"></div>
+      <div class="card-img">${l.photo_urls&&l.photo_urls[0]?`<img src="${l.photo_urls[0]}" alt="${l.title}">`:`<span class="ef">${l.emoji}</span>`}</div>
+      <div class="card-body">
+        <div class="card-title">${l.title}</div>
+        <div class="card-sub">${l.condition}</div>
+        <div class="card-tags">${(l.wants||[]).slice(0,1).map(w=>`<span class="tag w">wants: ${w}</span>`).join('')}</div>
+        <button class="btn-sm" style="margin-top:9px;width:100%" onclick="removeListing('${l.id}')">Remove</button>
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+function renderWishlist(){
+  const saved=listings.filter(l=>savedIds.has(l.id));
+  if(!saved.length)return`<div class="empty"><div class="ei">♥</div><p>Tap the heart on any listing to save it here.</p></div>`;
+  return`<div class="listings-grid">${saved.map(l=>`
+    <div class="card" onclick="openListing('${l.id}')">
+      <div class="card-stripe stripe-${catSlug(l.category)}"></div>
+      <div class="card-img">${l.photo_urls&&l.photo_urls[0]?`<img src="${l.photo_urls[0]}" alt="${l.title}">`:`<span class="ef">${l.emoji}</span>`}<span class="dist-pill">📍 ${l.dist}</span><button class="heart on" onclick="event.stopPropagation();toggleSave('${l.id}')">♥</button></div>
+      <div class="card-body"><div class="card-title">${l.title}</div><div class="card-sub" style="color:var(--coral);font-weight:600">${l.owner} <span class="stars">★</span>${l.ownerRep}</div><div class="card-tags"><span class="tag">${l.condition}</span>${(l.wants||[]).slice(0,1).map(w=>`<span class="tag w">wants: ${w}</span>`).join('')}</div></div>
+    </div>`).join('')}</div>`;
+}
+
+function renderHistory(){
+  const done=offers.filter(o=>o.status==='accepted'||(o.rated));
+  if(!done.length)return`<div class="empty"><div class="ei">📜</div><p>Your completed swaps will appear here.</p></div>`;
+  return`<div class="timeline">${done.map(h=>`
+    <div class="tl-item">
+      <div class="tl-dot completed">✓</div>
+      <div class="tl-card">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;font-weight:600">${new Date(h.created_at).toLocaleDateString()} · <span style="color:#2a5a40;font-weight:700">completed</span></div>
+        <div style="font-size:13px;font-weight:700;font-family:'Syne',sans-serif;margin-bottom:4px">Swap with ${h.from}</div>
+        <div class="orow"><span class="pill">${h.myEmoji} ${h.myItem}</span><span class="swap-arrow-icon">⇄</span><span class="pill">${h.theirEmoji} ${h.theirItem}</span></div>
+        ${h.rating?`<div style="color:var(--gold);margin-top:5px;font-size:15px">${'★'.repeat(h.rating)}${'☆'.repeat(5-h.rating)}</div>`:''}
+        ${h.rating_note?`<div style="font-size:12px;color:var(--muted);margin-top:3px;font-style:italic">"${h.rating_note}"</div>`:''}
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+function renderSubscription(){
+  const plan=getPlan();
+  return`
+  ${plan!=='free'?`<div style="background:var(--ink);border-radius:14px;padding:16px 20px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+    <div><div style="font-size:14px;font-weight:800;color:#fff;font-family:'Syne',sans-serif">Current: <span class="plan-pill ${plan}">${plan==='monthly'?'Monthly Pro':'Annual Pro'}</span></div>
+    <div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:3px">${plan==='monthly'?'Renews monthly':'Active for 12 months'}</div></div>
+    <button class="btn-sm" style="border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.6)" onclick="cancelPlan()">Cancel</button>
+  </div>`:`<div style="text-align:center;margin-bottom:20px"><div style="font-size:24px;font-weight:800;font-family:'Syne',sans-serif;color:var(--ink);margin-bottom:6px">Upgrade InstaSwap</div><div style="font-size:14px;color:var(--muted)">Unlock messaging, unlimited listings, and smart suggestions</div></div>`}
+  <div class="plans-grid">
+    <div class="plan-card">
+      <div class="plan-name">Free</div>
+      <div class="plan-price">AED 0<span>/forever</span></div>
+      <div class="plan-save" style="background:#e8e4e0;color:var(--sub)">Always free</div>
+      <ul class="plan-features"><li>Browse all listings</li><li>Up to 2 listings</li><li>3 swap offers</li><li class="no">Messaging</li><li class="no">Swap suggestions</li><li class="no">Priority support</li></ul>
+      ${plan==='free'?`<button class="btn btn-outline" style="width:100%;cursor:default;opacity:.6">Current plan</button>`:`<button class="btn btn-outline" style="width:100%" onclick="cancelPlan()">Downgrade to Free</button>`}
+    </div>
+    <div class="plan-card">
+      <div class="plan-name">Monthly Pro</div>
+      <div class="plan-price">AED 18.99<span>/month</span></div>
+      <div class="plan-save">Flexible · Cancel anytime</div>
+      <ul class="plan-features"><li>Browse all listings</li><li>Up to 20 listings</li><li>Unlimited swap offers</li><li>💬 Messaging</li><li>✨ Swap suggestions</li><li class="no">Priority support</li></ul>
+      ${plan==='monthly'?`<button class="btn btn-outline" style="width:100%;cursor:default;opacity:.6">Current plan</button>`:`<button class="btn btn-coral" style="width:100%" onclick="startTelrPayment('monthly')">Get Monthly Pro</button>`}
+    </div>
+    <div class="plan-card featured">
+      <div class="plan-badge">Best value</div>
+      <div class="plan-name">Annual Pro</div>
+      <div class="plan-price">AED 139.99<span>/year</span></div>
+      <div class="plan-save">Save 38% vs monthly 🎉</div>
+      <ul class="plan-features"><li>Browse all listings</li><li>Unlimited listings</li><li>Unlimited swap offers</li><li>💬 Messaging</li><li>✨ Swap suggestions</li><li>🌟 Priority support</li></ul>
+      ${plan==='annual'?`<button class="btn-purple" style="width:100%;cursor:default;opacity:.6">Current plan</button>`:`<button class="btn-purple" style="width:100%" onclick="startTelrPayment('annual')">Get Annual Pro</button>`}
+    </div>
+  </div>
+  <div style="text-align:center;font-size:12px;color:var(--muted)">🔒 Payments secured by Telr · UAE licensed payment gateway</div>`;
+}
+
+function renderNotifPrefs(){
+  const rows=[{key:'newOffers',label:'New swap offers',desc:'When someone proposes a swap'},{key:'messages',label:'New messages',desc:'When you receive a chat message'},{key:'offerAccepted',label:'Offer accepted',desc:'When your offer is accepted'},{key:'nearbyListings',label:'Nearby listings',desc:'New items within 2 km'},{key:'weeklyDigest',label:'Weekly digest',desc:'Summary of activity near you'}];
+  return`<div style="background:var(--card);border:2px solid var(--border);border-radius:15px;padding:4px 17px">
+    ${rows.map(r=>`<div class="notif-row"><div><div style="font-size:13px;font-weight:700">${r.label}</div><div style="font-size:12px;color:var(--muted);margin-top:2px">${r.desc}</div></div><button class="toggle ${notifPrefs[r.key]?'on':'off'}" onclick="toggleNotif('${r.key}')"></button></div>`).join('')}
+  </div>`;
+}
+
+// ── AUTH ──
+function openLogin(){
+  showModal(`
+    <div class="mhdr"><h3>Welcome back</h3><button class="mcls" onclick="closeModal()">✕</button></div>
+    <div id="auth-error" class="auth-error"></div>
+    <div class="fg"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com"></div>
+    <div class="fg"><label>Password</label><input type="password" id="login-pw" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn btn-coral" style="width:100%;padding:11px;font-family:'Syne',sans-serif" id="login-btn" onclick="doLogin()">Sign in →</button>
+    <div class="auth-switch">No account? <a onclick="closeModal();openSignup()">Join free</a> · <a onclick="openForgotPassword()">Forgot password?</a></div>
+  `);
+}
+
+async function doLogin(){
+  const email=document.getElementById('login-email').value.trim();
+  const pw=document.getElementById('login-pw').value;
+  const btn=document.getElementById('login-btn');
+  btn.innerHTML='<div class="spinner show"></div> Signing in...';
+  const {data,error}=await db.auth.signInWithPassword({email,password:pw});
+  if(error){
+    const err=document.getElementById('auth-error');
+    err.textContent=error.message==='Invalid login credentials'?'Incorrect email or password.':error.message;
+    err.style.display='block';
+    btn.innerHTML='Sign in →';
+  } else {
+    currentUser=data.user;
+    await loadProfile();
+    await loadListings();
+    await loadSaved();
+    closeModal();
+    renderMain();
+    showToast(`Welcome back! 👋`,'👋');
+  }
+}
+
+function openSignup(){
+  showModal(`
+    <div class="mhdr"><h3>Create your account</h3><button class="mcls" onclick="closeModal()">✕</button></div>
+    <div id="auth-error" class="auth-error"></div>
+    <div class="fg"><label>Full name</label><input type="text" id="su-name" placeholder="Your name"></div>
+    <div class="fg"><label>Email</label><input type="email" id="su-email" placeholder="you@example.com"></div>
+    <div class="fg"><label>Password</label><input type="password" id="su-pw" placeholder="At least 6 characters"></div>
+    <div class="fg"><label>City / Area</label><input type="text" id="su-city" placeholder="e.g. JBR, Dubai Marina, Downtown"></div>
+    <button class="btn btn-coral" style="width:100%;padding:11px;font-family:'Syne',sans-serif" id="signup-btn" onclick="doSignup()">Create account — it's free →</button>
+    <div class="auth-switch">Already have an account? <a onclick="closeModal();openLogin()">Sign in</a></div>
+  `);
+}
+
+async function doSignup(){
+  const name=document.getElementById('su-name').value.trim();
+  const email=document.getElementById('su-email').value.trim();
+  const pw=document.getElementById('su-pw').value;
+  const city=document.getElementById('su-city').value.trim()||'Dubai, UAE';
+  const err=document.getElementById('auth-error');
+  if(!name){err.textContent='Enter your name.';err.style.display='block';return;}
+  if(!email||!email.includes('@')){err.textContent='Enter a valid email.';err.style.display='block';return;}
+  if(pw.length<6){err.textContent='Password must be at least 6 characters.';err.style.display='block';return;}
+  const btn=document.getElementById('signup-btn');
+  btn.innerHTML='<div class="spinner show"></div> Creating account...';
+  const {data,error}=await db.auth.signUp({email,password:pw,options:{data:{name,city}}});
+  if(error){err.textContent=error.message;err.style.display='block';btn.innerHTML='Create account — it\'s free →';return;}
+  // Update city in profile (trigger creates it)
+  if(data.user){
+    await db.from('profiles').update({name,city}).eq('id',data.user.id);
+    currentUser=data.user;
+    userCity=city;
+    await loadProfile();
+  }
+  closeModal();
+  renderMain();
+  showToast(`Welcome to InstaSwap! 🎉`,'🎉');
+}
+
+function openForgotPassword(){
+  showModal(`
+    <div class="mhdr"><h3>Reset password</h3><button class="mcls" onclick="closeModal()">✕</button></div>
+    <div class="fg"><label>Email</label><input type="email" id="reset-email" placeholder="you@example.com"></div>
+    <button class="btn btn-coral" style="width:100%;padding:10px" id="reset-btn" onclick="doReset()">Send reset link</button>
+  `);
+}
+
+async function doReset(){
+  const email=document.getElementById('reset-email').value.trim();
+  const btn=document.getElementById('reset-btn');
+  btn.textContent='Sending...';
+  const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo:`${APP_URL}/#reset`});
+  closeModal();
+  showToast(error?'Failed to send reset email.':'Reset link sent! Check your inbox.', error?'⚠️':'📧');
+}
+
+function openUserMenu(){
+  showModal(`
+    <div class="mhdr"><h3>Account</h3><button class="mcls" onclick="closeModal()">✕</button></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;background:var(--ink);border-radius:13px;padding:13px 15px">
+      <div class="p-ava" style="width:42px;height:42px">${userProfile?.avatar_url?`<img src="${userProfile.avatar_url}" alt="avatar">`:initials(userProfile?.name)}</div>
+      <div><div style="font-size:14px;font-weight:800;color:#fff;font-family:'Syne',sans-serif">${userProfile?.name||''}</div><div style="font-size:12px;color:rgba(255,255,255,.45)">${currentUser?.email||''}</div></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="btn btn-outline" style="justify-content:flex-start" onclick="closeModal();openEditProfile()">✏️ Edit profile</button>
+      <button class="btn btn-outline" style="justify-content:flex-start" onclick="closeModal();setMineTab('subscription');switchTab('mine')">⭐ Subscription plans</button>
+      <button class="btn btn-outline" style="justify-content:flex-start" onclick="closeModal();setMineTab('notifs');switchTab('mine')">🔔 Notifications</button>
+      <button class="btn" style="justify-content:flex-start;background:#ede4e0;color:var(--coral);border:2px solid #d4aaaa" onclick="doLogout()">Sign out</button>
+    </div>
+  `);
+}
+
+async function doLogout(){
+  await db.auth.signOut();
+  currentUser=null;userProfile=null;userPlan='free';listings=[];myListings=[];offers=[];threads=[];savedIds=new Set();
+  closeModal();renderApp();
+}
+
+function openEditProfile(){
+  showModal(`
+    <div class="mhdr"><h3>Edit profile</h3><button class="mcls" onclick="closeModal()">✕</button></div>
+    <div class="fg"><label>Display name</label><input type="text" id="ep-name" value="${userProfile?.name||''}"></div>
+    <div class="fg"><label>City / Area</label><input type="text" id="ep-city" value="${userCity}"></div>
+    <div class="fg"><label>Bio</label><textarea id="ep-bio">${userProfile?.bio||''}</textarea></div>
+    <button class="btn btn-coral" style="width:100%;padding:10px;font-family:'Syne',sans-serif" id="ep-btn" onclick="saveProfile()">Save changes</button>
+  `);
+}
+
+async function saveProfile(){
+  const name=document.getElementById('ep-name').value.trim();
+  const city=document.getElementById('ep-city').value.trim();
+  const bio=document.getElementById('ep-bio').value.trim();
+  const btn=document.getElementById('ep-btn');
+  btn.textContent='Saving...';
+  const updates={name:name||userProfile?.name, city:city||userCity, bio};
+  const {error}=await db.from('profiles').update(updates).eq('id',currentUser.id);
+  if(!error){
+    if(userProfile) Object.assign(userProfile,updates);
+    if(city) userCity=city;
+  }
+  closeModal();render();showToast('Profile updated!','✓');
+}
+
+// ── LISTING MODALS ──
+function openListing(id){
+  const l=listings.find(x=>x.id===id);if(!l)return;
+  const isGuest=currentUser==='guest';
+  const isOwn=l.user_id===currentUser?.id;
+  showModal(`
+    <div class="mhdr"><h3>${l.title}</h3><button class="mcls" onclick="closeModal()">✕</button></div>
+    <div class="card-stripe stripe-${catSlug(l.category)}" style="border-radius:8px;margin-bottom:12px"></div>
+    ${l.photo_urls&&l.photo_urls[0]?`<img src="${l.photo_urls[0]}" style="width:100%;height:130px;object-fit:cover;border-radius:12px;margin-bottom:12px" alt="${l.title}">`:`<div style="text-align:center;font-size:58px;margin-bottom:12px">${l.emoji}</div>`}
+    <div style="text-align:center;margin-bottom:14px">
+      <div style="font-size:18px;font-weight:800;font-family:'Syne',sans-serif">${l.title}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;font-weight:600"><span style="color:var(--coral);cursor:pointer" onclick="openUserProfile('${l.id}')">${l.owner}</span> · <span class="stars">★</span>${l.ownerRep} · 📍 ${l.dist} · ${l.condition}</div>
+      <div style="font-size:13px;margin-top:9px;color:var(--muted);line-height:1.6">${l.description}</div>
+    </div>
+    <div style="background:linear-gradient(135deg,#f0ede8,#e8e4e0);border-radius:11px;padding:11px;margin-bottom:14px">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:800;text-transform:uppercase;letter-spacing:.04em">Looking for</div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px">${(l.wants||[]).map(w=>`<span class="tag w">${w}</span>`).join('')}</div>
+    </div>
+    ${isOwn?`<div class="status-msg info">This is your listing.</div>`:isGuest?`
+      <div style="background:linear-gradient(135deg,#f5f0e6,#ede6d4);border:2px solid var(--gold);border-radius:12px;padding:13px;text-align:center">
+        <div style="font-size:14px;font-weight:800;color:#6a5030;font-family:'Syne',sans-serif;margin-bottom:9px">Sign in to propose a swap</div>
+        <div style="display:flex;gap:8px;justify-content:center"><button class="btn btn-outline" onclick="closeModal();openLogin()">Sign in</button><button class="btn btn-coral" onclick="closeModal();openSignup()">Join free</button></div>
+      </div>`:`
+      <div class="fg"><label>Offer one of your items</label>
+        <select id="offer-item"><option value="">Select an item...</option>${myListings.map(m=>`<option value="${m.id}">${m.emoji} ${m.title}</option>`).join('')}</select>
+      </div>
+      <div class="fg"><label>Message (optional)</label><textarea id="offer-msg" placeholder="Tell ${l.owner} why this is a great swap..."></textarea></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-coral" style="flex:1;padding:10px" id="offer-btn" onclick="sendOffer('${l.id}','${l.user_id}')">⇄ Send swap offer</button>
+        <button class="btn-red" onclick="openReport('listing','${l.id}','${l.owner}')">⚑</button>
+      </div>
+    `}
+  `);
+}
+
+function openUserProfile(listingId){
+  const l=listings.find(x=>x.id===listingId);if(!l)return;
+  const ul=listings.filter(x=>x.user_id===l.user_id);
+  showModal(`
+    <div class="mhdr"><h3>Trader profile</h3><button class="mcls" onclick="closeModal()">✕</button></div>
+    <div class="user-hero">
+      <div class="user-ava-lg">${l.ownerInit||initials(l.owner)}</div>
+      <div class="user-name">${l.owner}</div>
+      <div class="user-meta"><span class="stars">★</span>${l.ownerRep} · ${l.ownerSwaps} swaps · 📍 ${l.ownerCity||'Dubai, UAE'}</div>
+      <div class="user-bio">${l.ownerBio||'Active InstaSwap trader.'}</div>
+    </div>
+    <div class="user-stats">
+      <div class="ustat"><div class="n" style="color:#2a5a40">${l.ownerSwaps}</div><div class="l">Swaps</div></div>
+      <div class="ustat"><div class="n" style="color:#6a5030">${l.ownerRep}</div><div class="l">Rating</div></div>
+      <div class="ustat"><div class="n" style="color:var(--coral)">${ul.length}</div><div class="l">Listings</div></div>
+    </div>
+    <div style="font-size:13px;font-weight:800;margin-bottom:9px;font-family:'Syne',sans-serif">Their listings</div>
+    <div class="user-listings">${ul.map(u=>`<div class="card" onclick="closeModal();setTimeout(()=>openListing('${u.id}'),60)"><div class="card-stripe stripe-${catSlug(u.category)}"></div><div class="card-img" style="height:68px;font-size:26px"><span class="ef">${u.emoji}</span></div><div class="card-body" style="padding:7px 10px"><div class="card-title" style="font-size:12px">${u.title}</div><div class="card-sub">${u.condition}</div></div></div>`).join('')}</div>
+    <div style="margin-top:13px;display:flex;gap:8px">
+      <button class="btn btn-coral" style="flex:1" onclick="closeModal();setTimeout(()=>openListing('${l.id}'),60)">⇄ Propose swap</button>
+      <button class="btn-red" onclick="openReport('user','${l.user_id}','${l.owner}')">⚑ Report</button>
+    </div>
+  `);
+}
+
+function openOfferUserProfile(name,init,rep,swaps){
+  showModal(`
+    <div class="mhdr"><h3>Trader profile</h3><button class="mcls" onclick="closeModal()">✕</button></div>
+    <div class="user-hero">
+      <div class="user-ava-lg">${init}</div>
+      <div class="user-name">${name}</div>
+      <div class="user-meta"><span class="stars">★</span>${rep} · ${swaps} swaps</div>
+      <div class="user-bio">Active InstaSwap member.</div>
+    </div>
+    <div class="user-stats">
+      <div class="ustat"><div class="n" style="color:#2a5a40">${swaps}</div><div class="l">Swaps</div></div>
+      <div class="ustat"><div class="n" style="color:#6a5030">${rep}</div><div class="l">Rating</div></div>
+      <div class="ustat"><div class="n" style="color:var(--coral)">0</div><div class="l">Reports</div></div>
+    </div>
+  `);
+}
+
+// ── ADD LISTING ──
+function openAddListing(){
+  if(!canDo('list')){
+    showModal(`
+      <div class="mhdr"><h3>Listing limit reached</h3><button class="mcls" onclick="closeModal()">✕</button></div>
+      <div style="text-align:center;padding:18px 0">
+        <div style="font-size:40px;margin-bottom:12px">📦</div>
+        <div style="font-size:16px;font-weight:800;font-family:'Syne',sans-serif;margin-bottom:8px">Upgrade to list more items</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:22px">You've used all your free listing slots.</div>
+        <button class="btn-purple" onclick="closeModal();setMineTab('subscription');switchTab('mine')">View plans →</button>
+      </div>
+    `);return;
+  }
+  addPhotoSlots=[];
+  const emojis=["🎮","📷","🎸","🏕️","🖥️","🚲","📚","🎨","⌚","🎵","👟","🛋️","🧸","🎿","⛸️"];
+  showModal(`
+    <div class="mhdr"><h3>List an item</h3><button class="mcls" onclick="closeModal()">✕</button></div>
+    <div class="fg"><label>Pick an icon</label>
+      <div style="display:flex;flex-wrap:wrap;gap:5px">${emojis.map(e=>`<button onclick="selEmoji(this,'${e}')" style="font-size:19px;border:2px solid var(--border);background:linear-gradient(135deg,#f0ede8,#e8e4e0);border-radius:8px;padding:4px 8px;cursor:pointer;transition:all .15s" data-emoji="${e}">${e}</button>`).join('')}</div>
+      <input type="hidden" id="emoji-val" value="🎮">
+    </div>
+    <div class="fg"><label>Photos (up to 3)</label><div class="photo-grid" id="photo-grid">${renderPhotoSlots()}</div></div>
+    <div class="fg"><label>Item name</label><input type="text" id="new-title" placeholder="e.g. Sony WH-1000XM5 Headphones"></div>
+    <div class="fg"><label>Category</label><select id="new-cat">${["Electronics","Music","Outdoors","Sports","Books","Art","Other"].map(c=>`<option>${c}</option>`).join('')}</select></div>
+    <div class="fg"><label>Condition</label><select id="new-cond">${["Excellent","Like new","Good","Fair"].map(c=>`<option>${c}</option>`).join('')}</select></div>
+    <div class="fg"><label>Description</label><textarea id="new-desc" placeholder="Describe your item, any flaws, accessories..."></textarea></div>
+    <div class="fg"><label>What are you looking for?</label><input type="text" id="new-wants" placeholder="Camera, Laptop (comma-separated)"></div>
+    <button class="btn btn-coral" style="width:100%;padding:10px;font-family:'Syne',sans-serif" id="add-btn" onclick="addListing()">+ Post listing</button>
+  `);
+}
+
+function renderPhotoSlots(){
+  let s='';
+  for(let i=0;i<3;i++){
+    if(addPhotoSlots[i])s+=`<div class="photo-slot"><img src="${addPhotoSlots[i].preview}" alt="Photo"><button class="rm-photo" onclick="removePhoto(${i})">✕</button></div>`;
+    else s+=`<label class="photo-slot"><span style="font-size:20px">📷</span><span>Add photo</span><input type="file" accept="image/*" onchange="addPhoto(event,${i})" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%"></label>`;
+  }
+  return s;
+}
+
+function addPhoto(e,idx){
+  const f=e.target.files[0];if(!f)return;
+  const preview=URL.createObjectURL(f);
+  addPhotoSlots[idx]={file:f,preview};
+  const g=document.getElementById('photo-grid');if(g)g.innerHTML=renderPhotoSlots();
+}
+function removePhoto(idx){addPhotoSlots.splice(idx,1);const g=document.getElementById('photo-grid');if(g)g.innerHTML=renderPhotoSlots();}
+function selEmoji(btn,e){document.querySelectorAll('[data-emoji]').forEach(b=>{b.style.background='linear-gradient(135deg,#f0ede8,#e8e4e0)';b.style.borderColor='var(--border)';});btn.style.background='var(--lime)';btn.style.borderColor='var(--lime)';document.getElementById('emoji-val').value=e;}
+
+async function addListing(){
+  const title=document.getElementById('new-title').value.trim();
+  if(!title){showToast('Enter an item name first','⚠️');return;}
+  const btn=document.getElementById('add-btn');
+  btn.innerHTML='<div class="spinner show"></div> Posting...';
+
+  // Upload photos to Supabase Storage
+  const photoUrls=[];
+  for(const slot of addPhotoSlots){
+    if(!slot?.file) continue;
+    const ext=slot.file.name.split('.').pop();
+    const path=`listings/${currentUser.id}/${Date.now()}.${ext}`;
+    const {data:up,error:ue}=await db.storage.from('listing-photos').upload(path,slot.file,{cacheControl:'3600',upsert:false});
+    if(!ue){
+      const {data:{publicUrl}}=db.storage.from('listing-photos').getPublicUrl(path);
+      photoUrls.push(publicUrl);
+    }
+  }
+
+  const wants=document.getElementById('new-wants').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const {data,error}=await db.from('listings').insert({
+    user_id:currentUser.id,
+    title,
+    description:document.getElementById('new-desc').value,
+    category:document.getElementById('new-cat').value,
+    condition:document.getElementById('new-cond').value,
+    emoji:document.getElementById('emoji-val').value,
+    wants:wants.length?wants:['Open to offers'],
+    photo_urls:photoUrls,
+    city:userCity,
+  }).select().single();
+
+  if(error){showToast('Failed to post listing','⚠️');btn.innerHTML='+ Post listing';return;}
+  await loadMyListings();
+  await loadListings();
+  addPhotoSlots=[];
+  closeModal();setMineTab('listings');switchTab('mine');showToast('Listing posted!','🎉');
+}
+
+async function removeListing(id){
+  await db.from('listings').update({is_active:false}).eq('id',id).eq('user_id',currentUser.id);
+  myListings=myListings.filter(l=>l.id!==id);
+  listings=listings.filter(l=>l.id!==id);
+  render();showToast('Listing removed.','✓');
+}
+
+// ── OFFERS ──
+async function sendOffer(listingId, toUserId){
+  if(!canDo('offer')){showToast('Offer limit reached — upgrade to send more','⚠️');return;}
+  const sel=document.getElementById('offer-item').value;
+  if(!sel){showToast('Select an item to offer','⚠️');return;}
+  const btn=document.getElementById('offer-btn');
+  btn.innerHTML='<div class="spinner show"></div> Sending...';
+  const msg=document.getElementById('offer-msg').value;
+
+  const {data,error}=await db.from('offers').insert({
+    from_user_id:currentUser.id,
+    to_user_id:toUserId,
+    their_listing_id:listingId,
+    my_listing_id:sel,
+    message:msg,
+  }).select().single();
+
+  if(error){showToast('Failed to send offer','⚠️');btn.innerHTML='⇄ Send swap offer';return;}
+
+  // Create first message if there's a note
+  if(msg&&data){
+    await db.from('messages').insert({offer_id:data.id,sender_id:currentUser.id,content:msg});
+  }
+
+  closeModal();showToast('Swap offer sent!','⇄');
+  await loadOffers();updateBadges();
+}
+
+async function acceptOffer(id){
+  await db.from('offers').update({status:'accepted'}).eq('id',id);
+  await loadOffers();render();showToast('Swap accepted! Chat to arrange meetup.','🎉');
+}
+
+async function declineOffer(id){
+  await db.from('offers').update({status:'declined'}).eq('id',id);
+  offers=offers.filter(o=>o.id!==id);render();showToast('Offer declined.','✓');
+}
+
+// ── MESSAGING ──
+function openThread(offerId){
+  if(!canDo('message')){
+    showModal(`<div class="mhdr"><h3>Messaging locked 🔒</h3><button class="mcls" onclick="closeModal()">✕</button></div><div style="text-align:center;padding:14px 0"><div style="font-size:36px;margin-bottom:11px">💬</div><div style="font-size:16px;font-weight:800;font-family:'Syne',sans-serif;margin-bottom:8px">Upgrade to chat with traders</div><div style="font-size:13px;color:var(--muted);margin-bottom:20px">Available on Monthly and Annual plans.</div><button class="btn-purple" onclick="closeModal();setMineTab('subscription');switchTab('mine')">See plans →</button></div>`);
+    return;
+  }
+  const t=threads.find(x=>x.id===offerId);
+  const with_name=t?t.with:'Trader';
+  if(t)t.unread=false;updateBadges();
+  showModal(`
+    <div class="mhdr"><h3>${with_name}</h3><button class="mcls" onclick="closeModal()">✕</button></div>
+    <div class="chat-wrap">
+      <div class="chat-msgs" id="cm-${offerId}">${(t?.messages||[]).map(m=>`<div><div class="msg ${m.from==='me'?'mine':'theirs'}">${m.text}<div class="msg-time">${m.time}</div></div></div>`).join('')}<div id="chat-end"></div></div>
+      <div class="chat-foot"><input type="text" id="ci-${offerId}" placeholder="Message..." onkeydown="if(event.key==='Enter')sendMsg('${offerId}')"><button class="send-btn" onclick="sendMsg('${offerId}')">➤</button></div>
+    </div>
+  `);
+  setTimeout(()=>{const el=document.getElementById('chat-end');if(el)el.scrollIntoView();},50);
+}
+
+async function sendMsg(offerId){
+  const inp=document.getElementById('ci-'+offerId);
+  const text=(inp&&inp.value||'').trim();if(!text)return;
+  inp.value='';
+
+  const {error}=await db.from('messages').insert({offer_id:offerId,sender_id:currentUser.id,content:text});
+  if(error){showToast('Failed to send message','⚠️');return;}
+
+  const msgs=document.getElementById('cm-'+offerId);
+  if(msgs){
+    const d=document.createElement('div');
+    d.innerHTML=`<div class="msg mine">${text}<div class="msg-time">Just now</div></div>`;
+    msgs.appendChild(d);
+    document.getElementById('chat-end')?.scrollIntoView();
+  }
+}
+
+// ── RATING ──
+function openRating(offerId,fromName){
+  _ratingVal=0;
+  showModal(`
+    <div class="mhdr"><h3>Rate your swap</h3><button class="mcls" onclick="closeModal()">✕</button></div>
+    <div style="text-align:center;margin-bottom:15px">
+      <div style="font-size:15px;font-weight:800;font-family:'Syne',sans-serif;margin-bottom:4px">How was your swap with ${fromName}?</div>
+      <div style="font-size:13px;color:var(--muted)">Your rating builds community trust.</div>
+    </div>
+    <div style="text-align:center;margin-bottom:15px">${[1,2,3,4,5].map(n=>`<button class="star-btn" id="star-${n}" onclick="setRating(${n})">☆</button>`).join('')}</div>
+    <div class="fg"><label>Comment (optional)</label><textarea id="rate-comment" placeholder="Describe your experience..."></textarea></div>
+    <button class="btn btn-coral" style="width:100%;padding:10px;font-family:'Syne',sans-serif" id="rate-btn" onclick="submitRating('${offerId}')">Submit rating ⭐</button>
+  `);
+}
+function setRating(n){_ratingVal=n;for(let i=1;i<=5;i++){const s=document.getElementById('star-'+i);if(s){s.textContent=i<=n?'★':'☆';s.classList.toggle('lit',i<=n);}}}
+
+async function submitRating(offerId){
+  if(!_ratingVal){showToast('Pick a star rating first','⚠️');return;}
+  const note=document.getElementById('rate-comment').value.trim();
+  const btn=document.getElementById('rate-btn');btn.textContent='Saving...';
+  await db.from('offers').update({rated:true,rating:_ratingVal,rating_note:note}).eq('id',offerId);
+  closeModal();showToast('Rating submitted — thanks!','⭐');
+  await loadOffers();render();_ratingVal=0;
+}
+
+// ── REPORT ──
+function openReport(type,refId,userName){
+  const opts=['Fake or misleading listing','Item not as described','Spam or scam','Inappropriate content','Abusive behaviour','Other'];
+  showModal(`
+    <div class="mhdr"><h3>Report ${type==='user'?'user':'listing'}</h3><button class="mcls" onclick="closeModal()">✕</button></div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:12px">Reporting: <strong style="color:var(--ink)">${userName}</strong>. Anonymous and reviewed by our team.</div>
+    <div class="report-opts">${opts.map(o=>`<button class="report-opt" onclick="selectReport(this)">${o}</button>`).join('')}</div>
+    <div class="fg" style="margin-top:12px"><label>Details (optional)</label><textarea id="report-detail" placeholder="Describe the issue..."></textarea></div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn btn-outline" style="flex:1" onclick="closeModal()">Cancel</button>
+      <button class="btn" style="flex:2;background:var(--coral);color:#fff;border-color:var(--coral)" onclick="submitReport('${type}','${refId}','${userName}')">Submit report</button>
+    </div>
+  `);
+}
+function selectReport(btn){document.querySelectorAll('.report-opt').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');}
+
+async function submitReport(type,refId,userName){
+  const sel=document.querySelector('.report-opt.sel');
+  if(!sel){showToast('Select a reason first','⚠️');return;}
+  const detail=document.getElementById('report-detail')?.value||'';
+  await db.from('reports').insert({reporter_id:currentUser.id,target_type:type,target_id:refId,reason:sel.textContent,detail});
+  closeModal();showToast('Report submitted. Our team will review it.','✓');
+}
+
+// ── SAVE / WISHLIST ──
+async function toggleSave(id){
+  if(currentUser==='guest'){openLogin();return;}
+  if(savedIds.has(id)){
+    await db.from('saved_listings').delete().eq('user_id',currentUser.id).eq('listing_id',id);
+    savedIds.delete(id);showToast('Removed from wishlist.','♡');
+  } else {
+    await db.from('saved_listings').insert({user_id:currentUser.id,listing_id:id});
+    savedIds.add(id);showToast('Saved to wishlist!','♥');
+  }
+  render();
+}
+
+// ── LOCATION ──
+function openLocationModal(){
+  showModal(`
+    <div class="mhdr"><h3>Your location</h3><button class="mcls" onclick="closeModal()">✕</button></div>
+    <div class="fg"><label>City / Area</label><input type="text" id="loc-inp" value="${userCity}" placeholder="e.g. JBR, Dubai Marina, Downtown Dubai"></div>
+    <div class="fg"><label>Search radius</label><select id="loc-radius"><option>1 km</option><option selected>5 km</option><option>10 km</option><option>25 km</option></select></div>
+    <button class="btn btn-coral" style="width:100%;padding:10px;font-family:'Syne',sans-serif" onclick="saveLocation()">📍 Update location</button>
+  `);
+}
+
+async function saveLocation(){
+  const v=document.getElementById('loc-inp').value.trim();
+  if(v){
+    userCity=v;
+    if(currentUser&&currentUser!=='guest'){
+      await db.from('profiles').update({city:v}).eq('id',currentUser.id);
+      if(userProfile) userProfile.city=v;
+    }
+  }
+  closeModal();render();showToast('Location updated to '+userCity+'!','📍');
+}
+
+// ── TELR PAYMENT ──
+function startTelrPayment(plan){
+  const prices={monthly:{amount:'18.99',label:'Monthly Pro',period:'month'},annual:{amount:'139.99',label:'Annual Pro',period:'year'}};
+  const p=prices[plan];
+  showModal(`
+    <div class="mhdr"><h3>${p.label} — AED ${p.amount}/${p.period}</h3><button class="mcls" onclick="closeModal()">✕</button></div>
+    <div class="payment-info">
+      <div style="font-size:13px;font-weight:800;font-family:'Syne',sans-serif;margin-bottom:10px">🔒 Secured by Telr</div>
+      <div class="payment-steps">
+        <div class="payment-step"><div class="step-num">1</div><div class="step-text">Click the button below — you'll be redirected to Telr's secure payment page.</div></div>
+        <div class="payment-step"><div class="step-num">2</div><div class="step-text">Pay with card, Apple Pay, or local UAE payment methods.</div></div>
+        <div class="payment-step"><div class="step-num">3</div><div class="step-text">You'll be redirected back to InstaSwap with Pro activated.</div></div>
+      </div>
+    </div>
+    <div style="background:#f0ede8;border-radius:10px;padding:12px;margin-bottom:15px;font-size:13px;color:var(--sub)">
+      <strong>What you get:</strong><br>
+      ✓ ${plan==='monthly'?'Up to 20':'Unlimited'} listings<br>
+      ✓ Unlimited swap offers<br>
+      ✓ 💬 Direct messaging<br>
+      ✓ ✨ AI swap suggestions<br>
+      ${plan==='annual'?'✓ 🌟 Priority support<br>✓ Save 38% vs monthly':''}
+    </div>
+    <button class="btn-purple" style="width:100%;padding:12px;font-size:15px" onclick="redirectToTelr('${plan}','${p.amount}')">
+      Pay AED ${p.amount} with Telr →
+    </button>
+    <div style="text-align:center;font-size:11px;color:var(--muted);margin-top:10px">
+      Licensed UAE payment gateway · Visa, Mastercard, Apple Pay, local methods accepted
+    </div>
+  `);
+}
+
+async function redirectToTelr(plan,amount){
+  if(TELR_STORE_ID==='YOUR_TELR_STORE_ID'){
+    showToast('Configure your Telr Store ID and Auth Key first','⚠️');
+    return;
+  }
+
+  const orderRef=`INSTASWAP-${currentUser.id.substring(0,8)}-${Date.now()}`;
+
+  // Save pending subscription
+  await db.from('subscriptions').insert({
+    user_id:currentUser.id,
+    plan,
+    telr_order_ref:orderRef,
+    amount_aed:parseFloat(amount),
+    status:'pending',
+    expires_at: plan==='monthly'
+      ? new Date(Date.now()+30*24*60*60*1000).toISOString()
+      : new Date(Date.now()+365*24*60*60*1000).toISOString(),
+  });
+
+  // Build Telr payment URL
+  // In production, this should be a server-side call to protect your auth key
+  const telrParams = new URLSearchParams({
+    'ivp_method': 'create',
+    'ivp_store': TELR_STORE_ID,
+    'ivp_authkey': TELR_AUTH_KEY,
+    'ivp_amount': amount,
+    'ivp_currency': 'AED',
+    'ivp_test': TELR_TEST_MODE ? '1' : '0',
+    'ivp_cart': orderRef,
+    'ivp_desc': `InstaSwap ${plan==='monthly'?'Monthly':'Annual'} Pro`,
+    'return_auth': `${APP_URL}/?payment=success&plan=${plan}&ref=${orderRef}`,
+    'return_can': `${APP_URL}/?payment=cancelled`,
+    'return_decl': `${APP_URL}/?payment=declined`,
+    'bill_fname': userProfile?.name?.split(' ')[0]||'Customer',
+    'bill_lname': userProfile?.name?.split(' ').slice(1).join(' ')||'.',
+    'bill_email': currentUser.email,
+    'bill_country': 'AE',
+  });
+
+  closeModal();
+  window.location.href=`https://secure.telr.com/gateway/order.json?${telrParams}`;
+}
+
+async function cancelPlan(){
+  if(confirm('Are you sure? You will lose messaging, unlimited listings, and suggestions.')){
+    await db.from('profiles').update({plan:'free',plan_expires_at:null}).eq('id',currentUser.id);
+    userPlan='free';
+    if(userProfile) userProfile.plan='free';
+    render();showToast('Subscription cancelled.','ℹ️');
+  }
+}
+
+// ── HELPERS ──
+function setFilter(f){activeFilter=f;render();}
+function setMineTab(t){mineTab=t;if(t==='listings')loadMyListings().then(render);else render();}
+function toggleNotif(k){notifPrefs[k]=!notifPrefs[k];render();}
+
+function showModal(html){document.getElementById('modal-root').innerHTML=`<div class="modal-bd" onclick="closeModal(event)"><div class="modal" onclick="event.stopPropagation()">${html}</div></div>`;}
+function closeModal(e){if(e&&e.target!==e.currentTarget)return;document.getElementById('modal-root').innerHTML='';}
+
+let _tt;
+function showToast(msg,icon='✓'){clearTimeout(_tt);document.getElementById('toast-msg').textContent=msg;document.getElementById('toast-icon').textContent=icon;document.getElementById('toast').classList.add('show');_tt=setTimeout(()=>document.getElementById('toast').classList.remove('show'),3200);}
+
+// Handle Telr return
+async function handlePaymentReturn(){
+  const params=new URLSearchParams(window.location.search);
+  const payment=params.get('payment');
+  const plan=params.get('plan');
+  const ref=params.get('ref');
+  if(!payment) return;
+
+  window.history.replaceState({},document.title,window.location.pathname);
+
+  if(payment==='success'&&plan&&currentUser){
+    const expires=plan==='monthly'
+      ? new Date(Date.now()+30*24*60*60*1000).toISOString()
+      : new Date(Date.now()+365*24*60*60*1000).toISOString();
+    await db.from('profiles').update({plan,plan_expires_at:expires}).eq('id',currentUser.id);
+    await db.from('subscriptions').update({status:'active'}).eq('telr_order_ref',ref).eq('user_id',currentUser.id);
+    userPlan=plan;
+    if(userProfile){userProfile.plan=plan;userProfile.plan_expires_at=expires;}
+    showToast(`Welcome to ${plan==='monthly'?'Monthly':'Annual'} Pro! 🚀`,'🎉');
+    render();
+  } else if(payment==='cancelled'){
+    showToast('Payment cancelled.','ℹ️');
+  } else if(payment==='declined'){
+    showToast('Payment declined. Please try again.','⚠️');
+  }
+}
+
+// ── START ──
+boot().then(handlePaymentReturn);
+</script>
+</body>
+</html>
